@@ -140,7 +140,7 @@ public class Main {
             reportList.add("epoch;time;start;train_error;test_error;mape");
             System.out.println(dataPathList[i]);
 
-            for (int j = INPUT_VAR; j <= 2 * INPUT_VAR; j++) {
+            for (int j = inputList[i]; j <= 2 * inputList[i]; j++) {
                 System.out.println(j);
                 GannRunner gannRunner = new GannRunner(j, OUTPUT_VAR, trainingSet, testSet, 0.001, j);
                 gannRunner.runTrain(false, false);
