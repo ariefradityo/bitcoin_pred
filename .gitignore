@@ -1,0 +1,7 @@
+.idea/
+normalized_test.csv
+normalized_train.csv
+normalize_script_test
+normalize_script_train
+*.eg
+target/

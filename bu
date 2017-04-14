@@ -1,0 +1,67 @@
+
+//        // inTrain the neural network
+//        HiddenMarkovModel hmm = new HiddenMarkovModel(4);
+//
+//        Matrix meanMatrix = new Matrix(4,4);
+//        meanMatrix.randomize(0, 1);
+//
+////        double[][] covarMatrix = {{0.04559569, 0.04452299, 0.03693741, 0.04504771},
+////                {0.04452299, 0.04378964, 0.03609320, 0.04425975},
+////                {0.03693741, 0.03609320, 0.03070352, 0.03672420},
+////                {0.04504771, 0.04425975, 0.03672420, 0.04500793},};
+//        double[][] covarMatrix =
+//                {{0.04559569, 0, 0, 0},
+//                {0, 0.04378964, 0, 0},
+//                {0, 0, 0.03070352, 0},
+//                {0, 0, 0, 0.04500793},};
+//
+//        ArrayList<Matrix> covarianceList = new ArrayList<Matrix>();
+//        double[] piList = {0.25,0.25,0.25,0.25};
+//        double[][] transitionMatrix = new double[4][4];
+//
+//        for(int i = 0; i< 4; i++) {
+//            hmm.setPi(i, piList[i]);
+//            Matrix cov = new Matrix(4, 4);
+//            for (int j = 0; j < 4; j++) {
+//                hmm.setTransitionProbability(i,j, 0.25);
+//                transitionMatrix[i][j] = 0.25;
+//                for (int k = j; k < 4; k++) {
+//                    double random = Math.random();
+//                    cov.set(j, k, random);
+//                    cov.set(k, j, random);
+//                }
+//            }
+//            cov = new Matrix(covarMatrix);
+//            covarianceList.add(cov);
+//            ContinousDistribution dis = new ContinousDistribution(meanMatrix.getRow(i).toPackedArray(), cov.getArrayCopy());
+//            hmm.setStateDistribution(i, dis);
+//        }
+//
+////        double [] mean1 = {0.25, -0.25};
+////        double [][] covariance1 = { {1, 2}, {1, 4} };
+////
+////        double [] mean2 = {0.5, 0.25};
+////        double [][] covariance2 = { {4, 2}, {3, 4} };
+////
+////        HiddenMarkovModel hmm = new HiddenMarkovModel(2);
+////
+////        hmm.setPi(0, 0.8);
+////        hmm.setPi(1, 0.2);
+////
+////        hmm.setStateDistribution(0, new ContinousDistribution(mean1,covariance1));
+////        hmm.setStateDistribution(1, new ContinousDistribution(mean2,covariance2));
+////
+////        hmm.setTransitionProbability(0, 1, 0.05);
+////        hmm.setTransitionProbability(0, 0, 0.95);
+////        hmm.setTransitionProbability(1, 0, 0.10);
+////        hmm.setTransitionProbability(1, 1, 0.90);
+////
+//        MarkovGenerator mg = new MarkovGenerator(hmm);
+////        MLSequenceSet sequenceSet = mg.generateSequences(200,100);
+//
+//
+//        MLSequenceSet sequenceSet = new BasicMLSequenceSet(trainingSet);
+//        TrainBaumWelch train = new TrainBaumWelch(hmm, sequenceSet);
+//        train.iteration(10);
+//        HiddenMarkovModel learntHmm = (HiddenMarkovModel)train.getMethod();
+//        System.out.println(learntHmm.lnProbability(sequenceSet));
