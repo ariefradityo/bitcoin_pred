@@ -141,10 +141,24 @@ public class Main {
             System.out.println(dataPathList[i]);
 
             for (int j = INPUT_VAR; j <= 2 * INPUT_VAR; j++) {
-                GannRunner gannRunner = new GannRunner(INPUT_VAR, OUTPUT_VAR, trainingSet, testSet, 0.001, j);
+                System.out.println(j);
+                GannRunner gannRunner = new GannRunner(j, OUTPUT_VAR, trainingSet, testSet, 0.001, j);
                 gannRunner.runTrain(false, false);
                 gannRunner.runTest(analyst);
                 reportList.add(gannRunner.getMinReport().toString());
+            }
+
+            json = new Gson().toJson(reportList);
+            try (FileWriter file = new FileWriter("report.json")) {
+                file.write(json);
+                file.flush();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            for (String s : reportList) {
+                System.out.println(s);
             }
 
         }
