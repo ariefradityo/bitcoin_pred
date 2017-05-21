@@ -95,30 +95,11 @@ public class BpnnRunner extends Runner{
             saveBpnn(network);
         }
 
-        if(error <= 0.002 && !check[0]){
-            saveBpnn(network);
-            check[0] = true;
-        }
-        if(error <= 0.00185 && !check[1]){
-            saveBpnn(network);
-            check[1] = true;
-        }
-        if(error <= 0.0018 && !check[2]){
-            saveBpnn(network);
-            check[2] = true;
-        }
-        if(error <= 0.00175 && !check[3]){
-            saveBpnn(network);
-            check[3] = true;
-        }
-        if(error <= 0.0017 && !check[4]){
-            saveBpnn(network, FILE_NAME);
-            check[4] = true;
-        }
-
     }
 
     public void runTest(EncogAnalyst analyst) {
+        network = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File(FILE_NAME));
         test(network, network, analyst);
+        //minReport.setMape(getReport().getMape());
     }
 }

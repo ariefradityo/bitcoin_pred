@@ -6,3 +6,5 @@ normalize_script_train
 *.eg
 target/
 *.iml
+normalize_script_all
+normalized_all.csv

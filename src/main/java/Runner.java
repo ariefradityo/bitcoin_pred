@@ -77,13 +77,13 @@ public abstract class Runner {
                     overFitCount++;
                 }
 
-                if( overFitCount == 1000){
+                if(overFitCount == 1000){
                     training = false;
                 }
             }
             long time = (System.currentTimeMillis() - start);
             String trainReport = "Epoch #" + epoch + " Error:" + train.getError() + " Time:" + time + " Start:" + start + " TestError: " + currentTestError + " MinError: " + minError;
-            //System.out.println(trainReport);
+            System.out.println(trainReport);
             report = new Report(epoch, train.getError(),time, start, currentTestError);
 
             if (limit != 0 && epoch == limit) {

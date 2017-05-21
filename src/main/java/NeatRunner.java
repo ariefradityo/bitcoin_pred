@@ -8,6 +8,7 @@ import org.encog.ml.data.MLDataPair;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.ea.opp.CompoundOperator;
 import org.encog.ml.ea.opp.selection.TournamentSelection;
+import org.encog.ml.ea.opp.selection.TruncationSelection;
 import org.encog.ml.ea.train.basic.TrainEA;
 import org.encog.neural.neat.NEATCODEC;
 import org.encog.neural.neat.NEATNetwork;
@@ -55,7 +56,7 @@ public class NeatRunner extends Runner{
         train.setSpeciation(new OriginalNEATSpeciation());
 
 
-        //inTrain.setSelection(new TruncationSelection(inTrain, 0.3));
+        //train.setSelection(new TruncationSelection(train, 0.3));
         train.setSelection(new TournamentSelection(train, 100));
         final CompoundOperator weightMutation = new CompoundOperator();
 
@@ -127,27 +128,6 @@ public class NeatRunner extends Runner{
             savePopulation();
         }
 
-        if(error <= 0.001 && !check[0]){
-            savePopulation(FILE_NAME + System.currentTimeMillis());
-            check[0] = true;
-        }
-        if(error <= 0.0009 && !check[1]){
-            savePopulation(FILE_NAME + System.currentTimeMillis());
-            check[1] = true;
-        }
-        if(error <= 0.0008 && !check[2]){
-            savePopulation(FILE_NAME + System.currentTimeMillis());
-            check[2] = true;
-        }
-        if(error <= 0.0007 && !check[3]){
-            savePopulation(FILE_NAME + System.currentTimeMillis());
-            check[3] = true;
-        }
-        if(error <= 0.0006 && !check[4]){
-            savePopulation(FILE_NAME + System.currentTimeMillis());
-            check[4] = true;
-        }
-
         if(epoch > 0){
             neatNetwork = (NEATNetwork) population.getCODEC().decode(population.getBestGenome());
             mlError = neatNetwork;
@@ -166,6 +146,7 @@ public class NeatRunner extends Runner{
         loadPopulation();
         neatNetwork = (NEATNetwork) population.getCODEC().decode(population.getBestGenome());
         test(neatNetwork, neatNetwork, analyst);
+        minReport.setMape(getReport().getMape());
     }
 
     private void loadPopulation(){

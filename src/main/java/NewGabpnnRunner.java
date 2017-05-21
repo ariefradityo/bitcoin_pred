@@ -1,35 +1,28 @@
-import com.sun.org.apache.bcel.internal.generic.POP;
+import genetic.GabpnnTrainingScore;
 import org.encog.app.analyst.EncogAnalyst;
-import org.encog.engine.network.activation.ActivationSigmoid;
 import org.encog.engine.network.activation.ActivationTANH;
-import org.encog.ml.*;
+import org.encog.ml.CalculateScore;
+import org.encog.ml.MLEncodable;
+import org.encog.ml.MLMethod;
+import org.encog.ml.MethodFactory;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.ea.genome.GenomeFactory;
 import org.encog.ml.ea.opp.selection.TournamentSelection;
-import org.encog.ml.ea.opp.selection.TruncationSelection;
 import org.encog.ml.ea.population.BasicPopulation;
 import org.encog.ml.ea.population.Population;
 import org.encog.ml.ea.sort.GenomeComparator;
 import org.encog.ml.ea.sort.MaximizeScoreComp;
 import org.encog.ml.ea.sort.MinimizeScoreComp;
 import org.encog.ml.ea.species.Species;
-import org.encog.ml.ea.train.basic.TrainEA;
-import org.encog.ml.factory.MLMethodFactory;
 import org.encog.ml.genetic.MLEncodableCODEC;
 import org.encog.ml.genetic.MLMethodGeneticAlgorithm;
 import org.encog.ml.genetic.MLMethodGenome;
 import org.encog.ml.genetic.MLMethodGenomeFactory;
 import org.encog.ml.genetic.crossover.Splice;
 import org.encog.ml.genetic.mutate.MutatePerturb;
-import org.encog.ml.prg.PersistPrgPopulation;
-import org.encog.ml.train.MLTrain;
 import org.encog.neural.networks.BasicNetwork;
 import org.encog.neural.networks.layers.BasicLayer;
-import org.encog.neural.networks.training.Train;
 import org.encog.neural.networks.training.TrainingSetScore;
-import org.encog.neural.networks.training.propagation.back.Backpropagation;
-import org.encog.neural.networks.training.strategy.SmartLearningRate;
-import org.encog.neural.networks.training.strategy.SmartMomentum;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.obj.SerializeObject;
 
@@ -37,87 +30,48 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by arief on 20/03/2017.
+ * Created by arief on 15/04/2017.
  */
-public class GannRunner extends Runner {
+public class NewGabpnnRunner extends Runner {
 
     private BasicNetwork network;
     private MLMethodGeneticAlgorithm train;
-    private final String FILE_NAME = "gann.eg";
-    private final String POP_FILE_NAME = "gann_population.eg";
+    private final String FILE_NAME = "gabpnn.eg";
+    private final String POP_FILE_NAME = "gabpnn_population.eg";
 
-    private final int POP_SIZE = 1000;
+    private final int POP_SIZE = 40;
 
-    private boolean[] check = {false, false, false, false, false};
 
-    public GannRunner(int input, int output, MLDataSet trainingSet, MLDataSet testSet, double error) {
+    public NewGabpnnRunner(int input, int output, MLDataSet trainingSet, MLDataSet testSet, double error) {
         super(input, output, trainingSet, testSet, error);
 
         network = new BasicNetwork();
         network.addLayer(new BasicLayer(new ActivationTANH(), true, INPUT));
-        network.addLayer(new BasicLayer(new ActivationTANH(), true, INPUT));
+        network.addLayer(new BasicLayer(new ActivationTANH(), true, 15));
         network.addLayer(new BasicLayer(new ActivationTANH(), true, OUTPUT));
         network.getStructure().finalizeStructure();
         network.reset(10);
     }
 
-    public GannRunner(int input, int output, MLDataSet trainingSet, MLDataSet testSet, double error, int hiddenNodes) {
-        super(input, output, trainingSet, testSet, error);
-
-        network = new BasicNetwork();
-        network.addLayer(new BasicLayer(new  ActivationSigmoid(), true, INPUT));
-        network.addLayer(new BasicLayer(new  ActivationSigmoid(), true, hiddenNodes));
-        network.addLayer(new BasicLayer(new  ActivationSigmoid(), true, OUTPUT));
-        network.getStructure().finalizeStructure();
-        network.reset(10);
-    }
-
+    @Override
     protected void inTrain(int epoch, double error) {
-
         if(Double.compare(currentTestError, minError) == -1 || Double.compare(currentTestError, minError) == 0){
-            saveGann(network);
+            saveGabpnn(network);
             saveGannPopulation(train.getGenetic().getPopulation());
         }
     }
 
-    private void saveGann(BasicNetwork network) {
-        File neatFile = new File(FILE_NAME);
-        EncogDirectoryPersistence.saveObject(neatFile, network);
-    }
-
-    private void saveGann(BasicNetwork network, String fileName) {
-        File neatFile = new File(fileName);
-        EncogDirectoryPersistence.saveObject(neatFile, network);
-    }
-
-    private void saveGannPopulation(Population population){
-        GenomeFactory factory = population.getGenomeFactory();
-        population.setGenomeFactory(null);
-        File popFile = new File(POP_FILE_NAME);
-        try {
-            SerializeObject.save(popFile,population);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        population.setGenomeFactory(factory);
-    }
-
-
+    @Override
     public void runTrain(boolean load) {
         runTrain(true, false);
     }
 
-    public void runTrain(boolean load, boolean loadPopulation, int limit){
-
-    }
-
-
     public void runTrain(boolean load, boolean loadPopulation) {
-        if(load){
+        if (load) {
             network = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File(FILE_NAME));
         }
 
-        CalculateScore score = new TrainingSetScore(TRAIN_SET);
+        CalculateScore score = new GabpnnTrainingScore(TRAIN_SET, TEST_SET);
 
         MethodFactory phenotypeFactory = new MethodFactory() {
             public MLMethod factor() {
@@ -140,7 +94,7 @@ public class GannRunner extends Runner {
         }
         defaultSpecies.setLeader(defaultSpecies.getMembers().get(0));
 
-        if(loadPopulation) {
+        if (loadPopulation) {
             try {
                 population = (Population) SerializeObject.load(new File(POP_FILE_NAME));
             } catch (IOException | ClassNotFoundException e) {
@@ -172,21 +126,38 @@ public class GannRunner extends Runner {
 
         geneticTrainer.addOperation(0.9, new Splice(s));
         geneticTrainer.addOperation(0.1, new MutatePerturb(1.0));
-        geneticTrainer.setSelection(new TournamentSelection(geneticTrainer, 10));
+        geneticTrainer.setSelection(new TournamentSelection(geneticTrainer, 4));
 
         //geneticTrainer.setSelection(new TruncationSelection(geneticTrainer, ));
 
         train.setGenetic(geneticTrainer);
 
-        train(train, network);
-
-        //saveGann(network);
+        train(train, 10, network);
     }
 
-
+    @Override
     public void runTest(EncogAnalyst analyst) {
         network = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File(FILE_NAME));
         test(network, network, analyst);
         minReport.setMape(getReport().getMape());
     }
+
+    private void saveGabpnn(BasicNetwork network) {
+        File neatFile = new File(FILE_NAME);
+        EncogDirectoryPersistence.saveObject(neatFile, network);
+    }
+
+    private void saveGannPopulation(Population population){
+        GenomeFactory factory = population.getGenomeFactory();
+        population.setGenomeFactory(null);
+        File popFile = new File(POP_FILE_NAME);
+        try {
+            SerializeObject.save(popFile,population);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        population.setGenomeFactory(factory);
+    }
+
+
 }
