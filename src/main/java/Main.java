@@ -128,7 +128,7 @@ public class Main {
                 MLDataSet testSet = TrainingSetUtil.loadCSVTOMemory(CSVFormat.DECIMAL_POINT, NORMALIZED_TEST, true, Constants.powerSetNum[powerCount].length, 1);
 
                 NeatRunner neatRunner = new NeatRunner(Constants.powerSetNum[powerCount].length, 1, trainingSet, testSet, 0.00001, new ActivationSteepenedSigmoid(), false);
-                neatRunner.runTrain(false);
+                neatRunner.runTrain(false, 1000);
                 neatRunner.runTest(analyst);
                 reportList.add(neatRunner.getMinReport().toString());
 //

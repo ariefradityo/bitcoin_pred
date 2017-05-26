@@ -142,6 +142,13 @@ public class NeatRunner extends Runner{
         //savePopulation();
     }
 
+    public void runTrain(boolean load, int limit){
+        if(population.getBestGenome() != null) {
+            neatNetwork = (NEATNetwork) population.getCODEC().decode(population.getBestGenome());
+        }
+        train(train, limit, neatNetwork);
+    }
+
     public void runTest(EncogAnalyst analyst) {
         loadPopulation();
         neatNetwork = (NEATNetwork) population.getCODEC().decode(population.getBestGenome());
