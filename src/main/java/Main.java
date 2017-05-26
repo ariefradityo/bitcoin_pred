@@ -2,6 +2,7 @@
 
 import com.google.gson.Gson;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import model.Item;
@@ -30,11 +31,12 @@ import org.encog.neural.networks.BasicNetwork;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.csv.CSVFormat;
 import org.encog.util.simple.TrainingSetUtil;
+import util.Constants;
 import util.TechnicalAnalyst;
 
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -62,40 +64,80 @@ public class Main {
 
     public static void main(String args[]) {
 
-        System.out.println("Normalize Input File");
-
-        normalizeData(TRAIN_FILE, TEST_FILE, WizardMethodType.FeedForward, true, NormalizeRange.Zero2One);
-        normalizeData(TRAIN_FILE, TEST_FILE, WizardMethodType.FeedForward, false, NormalizeRange.Zero2One);
-        normalizeAll(ALL_FILE, WizardMethodType.FeedForward, NormalizeRange.Zero2One);
-
-        ActivationFunction activationFunction = new ActivationTANH();
+        String[] headerArray = {"close", "volume", "macd", "rsi", "obv", "atr", "mom", "usd_close", "gold_close", "sma_plus_3"};
+        HashSet<String> headerSet = new HashSet<>();
+        headerSet.addAll(Arrays.asList(headerArray));
 
 
-        MLDataSet allSet = TrainingSetUtil.loadCSVTOMemory(CSVFormat.DECIMAL_POINT, NORMALIZED_ALL,true, INPUT_VAR, OUTPUT_VAR);
-        List<MLDataPair> trainingList = new ArrayList<>();
-        List<MLDataPair> testList = new ArrayList<>();
+        try {
 
-        for(int i = 0; i < allSet.size(); i++){
-            if(i < 950){
-                trainingList.add(allSet.get(i));
-            }else {
-                testList.add(allSet.get(i));
-            }
-        }
+            int start = 0;
+            int length = Constants.powerSetNum.length;
+            String[] nextLine;
+            for (int powerCount = start; powerCount < length; powerCount++) {
+                CSVReader reader = new CSVReader(new FileReader("all.csv"));
+                CSVWriter trainWriter = new CSVWriter(new FileWriter("train.csv"));
+                CSVWriter testWriter = new CSVWriter(new FileWriter("test.csv"));
+                nextLine = reader.readNext();
+                trainWriter.writeNext(nextLine);
+                testWriter.writeNext(nextLine);
+
+                int lineIndex = 0;
+                while ((nextLine = reader.readNext()) != null) {
+                    String[] content = new String[Constants.powerSetNum[powerCount].length + 1];
+                    for (int headIndex = 0; headIndex < Constants.powerSetNum[powerCount].length; headIndex++) {
+                        content[headIndex] = nextLine[Constants.powerSetNum[powerCount][headIndex]];
+                    }
+                    content[Constants.powerSetNum[powerCount].length] = nextLine[9];
+                    if (lineIndex < 986) {
+                        trainWriter.writeNext(content);
+                    } else {
+                        testWriter.writeNext(content);
+                    }
+                    lineIndex++;
+                }
+                trainWriter.close();
+                testWriter.close();
+
+                System.out.println("Normalize Input File");
+
+                normalizeData(TRAIN_FILE, TEST_FILE, WizardMethodType.FeedForward, true, NormalizeRange.Zero2One);
+                normalizeData(TRAIN_FILE, TEST_FILE, WizardMethodType.FeedForward, false, NormalizeRange.Zero2One);
+                //normalizeAll(ALL_FILE, WizardMethodType.FeedForward, NormalizeRange.Zero2One);
+
+
+//                MLDataSet allSet = TrainingSetUtil.loadCSVTOMemory(CSVFormat.DECIMAL_POINT, NORMALIZED_ALL, true, INPUT_VAR, OUTPUT_VAR);
+//                List<MLDataPair> trainingList = new ArrayList<>();
+//                List<MLDataPair> testList = new ArrayList<>();
+//
+//                for (int i = 0; i < allSet.size(); i++) {
+//                    if (i < 987) {
+//                        trainingList.add(allSet.get(i));
+//                    } else {
+//                        testList.add(allSet.get(i));
+//                    }
+//                }
 
 //        MLDataSet trainingSet = new BasicMLDataSet(trainingList);
 //        MLDataSet testSet = new BasicMLDataSet(testList);
+                EncogAnalyst analyst = new EncogAnalyst();
+                analyst.load(new File(NORMALIZE_SCRIPT_TRAIN));
+                List<String> reportList = new ArrayList<>();
 
-        MLDataSet trainingSet = TrainingSetUtil.loadCSVTOMemory(CSVFormat.DECIMAL_POINT, NORMALIZED_TRAIN, true, INPUT_VAR, OUTPUT_VAR);
-        MLDataSet testSet = TrainingSetUtil.loadCSVTOMemory(CSVFormat.DECIMAL_POINT, NORMALIZED_TEST, true, INPUT_VAR, OUTPUT_VAR);
+                MLDataSet trainingSet = TrainingSetUtil.loadCSVTOMemory(CSVFormat.DECIMAL_POINT, NORMALIZED_TRAIN, true,Constants.powerSetNum[powerCount].length , 1);
+                MLDataSet testSet = TrainingSetUtil.loadCSVTOMemory(CSVFormat.DECIMAL_POINT, NORMALIZED_TEST, true, Constants.powerSetNum[powerCount].length, 1);
 
-        EncogAnalyst analyst = new EncogAnalyst();
-        analyst.load(new File(NORMALIZE_SCRIPT_TRAIN));
+                NeatRunner neatRunner = new NeatRunner(Constants.powerSetNum[powerCount].length, 1, trainingSet, testSet, 0.00001, new ActivationSteepenedSigmoid(), false);
+                neatRunner.runTrain(false);
+                neatRunner.runTest(analyst);
+                reportList.add(neatRunner.getMinReport().toString());
+//
+//
 
 
-        String json = "";
+                String json = "";
 
-        //VersatileMLDataSet versatile = new VersatileMLDataSet()
+                //VersatileMLDataSet versatile = new VersatileMLDataSet()
 
 //        FeedForwardPattern pattern = new FeedForwardPattern();
 //        pattern.setInputNeurons(INPUT_VAR);
@@ -106,7 +148,7 @@ public class Main {
 //        pruneIncremental.addHiddenLayer(1,10);
 //        pruneIncremental.addHiddenLayer(1,10);
 //        pruneIncremental.process();
-        List<String> reportList = new ArrayList<>();
+
 
 //        for (int i = 0; i < dataPathList.length; i++) {
 //            String newPathName = dataPathList[i].concat(TRAIN_FILE);
@@ -123,7 +165,7 @@ public class Main {
 //            System.out.println(dataPathList[i]);
 //
 //            for (int j = INPUT_VAR; j <= 2 * INPUT_VAR; j++) {
-        //BpnnRunner bpnnRunner = new BpnnRunner(inputList[i], OUTPUT_VAR, trainingSet, testSet, 0.001, j);
+                //BpnnRunner bpnnRunner = new BpnnRunner(inputList[i], OUTPUT_VAR, trainingSet, testSet, 0.001, j);
 //                BpnnRunner bpnnRunner = new BpnnRunner(INPUT_VAR, OUTPUT_VAR, trainingSet, testSet, 0.0001, 15);
 //                bpnnRunner.runTrain(false);
 //                bpnnRunner.runTest(analyst);
@@ -181,7 +223,7 @@ public class Main {
 //            }
 //        }
 
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //
 //        for (int i = 0; i < dataPathList.length; i++) {
@@ -200,7 +242,7 @@ public class Main {
 //
 //            for (int j = inputList[i]; j <= 2 * inputList[i]; j++) {
 //                System.out.println(j);
-        //GannRunner gannRunner = new GannRunner(inputList[i], OUTPUT_VAR, trainingSet, testSet, 0.001, j);
+                //GannRunner gannRunner = new GannRunner(inputList[i], OUTPUT_VAR, trainingSet, testSet, 0.001, j);
 //                GannRunner gannRunner = new GannRunner(INPUT_VAR, OUTPUT_VAR, trainingSet, testSet, 0.0001, 9);
 //                gannRunner.runTrain(false, false);
 //                gannRunner.runTest(analyst);
@@ -221,7 +263,7 @@ public class Main {
 //            }
 
 //        }
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //        GabpnnRunner gabpnnRunner = new GabpnnRunner(INPUT_VAR, OUTPUT_VAR, trainingSet, testSet, 0.001);
 //        gabpnnRunner.runTrain(false);
 //        gabpnnRunner.runTest(analyst);
@@ -247,120 +289,129 @@ public class Main {
 //
 //        } while(inTrain.getError() > 0.0001);
 
-        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-        try {
-            int startTestIndex =950;
+//        try {
+//            int startTestIndex =950;
+//
+//            analyst.load(new File(NORMALIZE_SCRIPT_TEST));
+//            CSVReader reader = new CSVReader(new FileReader(NORMALIZED_TEST));
+//            HeaderColumnNameMappingStrategy<Item> strategy = new HeaderColumnNameMappingStrategy<>();
+//            strategy.setType(Item.class);
+//            CsvToBean<Item> csvToBean = new CsvToBean<>();
+//            List<Item> itemList = csvToBean.parse(strategy, reader);
+//
+//            reader = new CSVReader(new FileReader(ALL_FILE));
+//            strategy = new HeaderColumnNameMappingStrategy<>();
+//            strategy.setType(Item.class);
+//            csvToBean = new CsvToBean<>();
+//            List<Item> originList = csvToBean.parse(strategy, reader);
+//
+//
+//            BasicNetwork bpnn = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File("network/bpnn.eg"));
+//            BasicNetwork gann = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File("network/gann.eg"));
+//            BasicNetwork gabpnn = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File("network/gabpnn.eg"));
+//
+//            FileInputStream stream = new FileInputStream(new File("network/neat.eg"));
+//            PersistNEATPopulation pnp = new PersistNEATPopulation();
+//            NEATPopulation population = (NEATPopulation) pnp.read(stream);
+//            NEATNetwork neat = (NEATNetwork) population.getCODEC().decode(population.getBestGenome());
+//
+//
+//            StringBuilder  gabpBuilder  = new StringBuilder("GABPNN").append("\n");
+//            StringBuilder gaBuilder = new StringBuilder("GANN").append("\n");
+//            StringBuilder neatBuilder =   new StringBuilder("NEAT").append("\n");
+//
+//            ParamEstimator estimator = new ParamEstimator();
+//            ParamRegressor regressor = new ParamRegressor();
+//
+//            reportList.add("BPNN");
+//            reportList.add("H+1;H+1_pred;H+2;H+2_pred;H+3;H+3_pred;H+4;H+4_pred;H+5;H+5_pred;H+6;H+6_pred;H+7;H+7_pred;");
+//
+//            MLRegression network = neat;
+//
+//            //BPNN Prediction
+//            for (int i = startTestIndex; i <= originList.size() - 7; i++) {
+//                List<Item> trainList = new ArrayList<>();
+//                trainList.add(itemList.get(i-startTestIndex));
+//                List<Item> originTrainList = new ArrayList<>(originList.subList(0, i+1));
+//                TechnicalAnalyst trainAnalyst = new TechnicalAnalyst(originTrainList, trainList, analyst);
+//
+//                Item item = trainList.get(0);
+//                BasicMLData inputDataBp = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getWill14(), item.getEma12(), item.getEma26()});
+//                BasicMLData inputDataGa = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getEma26()});
+//
+//                BasicMLData inputData = inputDataGa;
+//
+//                double bpOut = networkCompute(network, inputData);
+//
+//                AnalystField nextField = analyst.getScript().getNormalize().getNormalizedFields().get(9);
+//                double ideal = nextField.deNormalize(itemList.get(i-startTestIndex).getNext1());
+//                double predicted = nextField.deNormalize(bpOut);
+//
+//                StringBuilder bpBuilder = new StringBuilder(String.valueOf(ideal)).append(SEMICOL).append(predicted).append(SEMICOL);
+//
+//                for (int j = 0; j < 6; j++) {
+//                    item = trainList.get(j);
+//                    trainAnalyst.addItem(
+//                            item.getClose(),
+//                            //estimator.computeHigh(item),
+//                            regressor.computeHigh(item.getHigh()),
+//                            //estimator.computeLow(item),
+//                            regressor.computeLow(item.getLow()),
+//                            bpOut,
+//                            //estimator.computeVolume(item)
+//                            regressor.computeVolume(item.getVolume())
+//                            );
+//                    item = trainList.get(j+1);
+//                    inputDataBp = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getWill14(), item.getEma12(), item.getEma26()});
+//                    inputDataGa = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getEma26()});
+//
+//                    inputData = inputDataGa;
+//
+//                    bpOut = networkCompute(network, inputData);
+//                    ideal = nextField.deNormalize(itemList.get(i-startTestIndex+j).getNext1());
+//                    predicted = nextField.deNormalize(bpOut);
+//                    bpBuilder.append(ideal).append(SEMICOL).append(predicted).append(SEMICOL);
+//                }
+//                reportList.add(bpBuilder.toString());
+//            }
+//
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
 
-            analyst.load(new File(NORMALIZE_SCRIPT_TEST));
-            CSVReader reader = new CSVReader(new FileReader(NORMALIZED_TEST));
-            HeaderColumnNameMappingStrategy<Item> strategy = new HeaderColumnNameMappingStrategy<>();
-            strategy.setType(Item.class);
-            CsvToBean<Item> csvToBean = new CsvToBean<>();
-            List<Item> itemList = csvToBean.parse(strategy, reader);
 
-            reader = new CSVReader(new FileReader(ALL_FILE));
-            strategy = new HeaderColumnNameMappingStrategy<>();
-            strategy.setType(Item.class);
-            csvToBean = new CsvToBean<>();
-            List<Item> originList = csvToBean.parse(strategy, reader);
+                //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+                json = new Gson().toJson(reportList);
+                try (FileWriter file = new FileWriter("jkse_result_" + powerCount + ".json")) {
+                    file.write(json);
+                    file.flush();
 
-            BasicNetwork bpnn = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File("network/bpnn.eg"));
-            BasicNetwork gann = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File("network/gann.eg"));
-            BasicNetwork gabpnn = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File("network/gabpnn.eg"));
-
-            FileInputStream stream = new FileInputStream(new File("network/neat.eg"));
-            PersistNEATPopulation pnp = new PersistNEATPopulation();
-            NEATPopulation population = (NEATPopulation) pnp.read(stream);
-            NEATNetwork neat = (NEATNetwork) population.getCODEC().decode(population.getBestGenome());
-
-
-            StringBuilder  gabpBuilder  = new StringBuilder("GABPNN").append("\n");
-            StringBuilder gaBuilder = new StringBuilder("GANN").append("\n");
-            StringBuilder neatBuilder =   new StringBuilder("NEAT").append("\n");
-
-            ParamEstimator estimator = new ParamEstimator();
-            ParamRegressor regressor = new ParamRegressor();
-
-            reportList.add("BPNN");
-            reportList.add("H+1;H+1_pred;H+2;H+2_pred;H+3;H+3_pred;H+4;H+4_pred;H+5;H+5_pred;H+6;H+6_pred;H+7;H+7_pred;");
-
-            MLRegression network = neat;
-
-            //BPNN Prediction
-            for (int i = startTestIndex; i <= originList.size() - 7; i++) {
-                List<Item> trainList = new ArrayList<>();
-                trainList.add(itemList.get(i-startTestIndex));
-                List<Item> originTrainList = new ArrayList<>(originList.subList(0, i+1));
-                TechnicalAnalyst trainAnalyst = new TechnicalAnalyst(originTrainList, trainList, analyst);
-
-                Item item = trainList.get(0);
-                BasicMLData inputDataBp = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getWill14(), item.getEma12(), item.getEma26()});
-                BasicMLData inputDataGa = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getEma26()});
-
-                BasicMLData inputData = inputDataGa;
-
-                double bpOut = networkCompute(network, inputData);
-
-                AnalystField nextField = analyst.getScript().getNormalize().getNormalizedFields().get(9);
-                double ideal = nextField.deNormalize(itemList.get(i-startTestIndex).getNext1());
-                double predicted = nextField.deNormalize(bpOut);
-
-                StringBuilder bpBuilder = new StringBuilder(String.valueOf(ideal)).append(SEMICOL).append(predicted).append(SEMICOL);
-
-                for (int j = 0; j < 6; j++) {
-                    item = trainList.get(j);
-                    trainAnalyst.addItem(
-                            item.getClose(),
-                            //estimator.computeHigh(item),
-                            regressor.computeHigh(item.getHigh()),
-                            //estimator.computeLow(item),
-                            regressor.computeLow(item.getLow()),
-                            bpOut,
-                            //estimator.computeVolume(item)
-                            regressor.computeVolume(item.getVolume())
-                            );
-                    item = trainList.get(j+1);
-                    inputDataBp = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getWill14(), item.getEma12(), item.getEma26()});
-                    inputDataGa = new BasicMLData(new double[]{item.getOpen(), item.getHigh(), item.getLow(), item.getClose(), item.getVolume(), item.getEma26()});
-
-                    inputData = inputDataGa;
-
-                    bpOut = networkCompute(network, inputData);
-                    ideal = nextField.deNormalize(itemList.get(i-startTestIndex+j).getNext1());
-                    predicted = nextField.deNormalize(bpOut);
-                    bpBuilder.append(ideal).append(SEMICOL).append(predicted).append(SEMICOL);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                reportList.add(bpBuilder.toString());
+
+                for (String s : reportList) {
+                    System.out.println(s);
+                }
+
+                Toolkit.getDefaultToolkit().beep();
+                Encog.getInstance().shutdown();
+
             }
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-        }
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        json = new Gson().toJson(reportList);
-        try (FileWriter file = new FileWriter("report.json")) {
-            file.write(json);
-            file.flush();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        for (String s : reportList) {
-            System.out.println(s);
-        }
-
-        Toolkit.getDefaultToolkit().beep();
-        Encog.getInstance().shutdown();
     }
 
 
-    private static double networkCompute(MLRegression network, MLData input){
+    private static double networkCompute(MLRegression network, MLData input) {
         return network.compute(input).getData(0);
     }
 
@@ -392,7 +443,7 @@ public class Main {
 
     }
 
-    private static void normalizeAll(String path, WizardMethodType methodType, NormalizeRange range){
+    private static void normalizeAll(String path, WizardMethodType methodType, NormalizeRange range) {
         File sourceFile = new File(path);
         File targetFile = new File(NORMALIZED_ALL);
 

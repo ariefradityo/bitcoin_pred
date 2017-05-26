@@ -8,3 +8,4 @@ target/
 *.iml
 normalize_script_all
 normalized_all.csv
+*.json

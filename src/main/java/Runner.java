@@ -63,6 +63,7 @@ public abstract class Runner {
         training = true;
         long start = System.currentTimeMillis();
         int epoch = 1;
+        limit = 10;
         do {
             train.iteration();
             currentTestError = 0;
