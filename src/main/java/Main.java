@@ -1,11 +1,14 @@
 
 
 import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import model.Item;
+import org.apache.commons.io.FileUtils;
 import org.encog.Encog;
 import org.encog.app.analyst.AnalystFileFormat;
 import org.encog.app.analyst.AnalystGoal;
@@ -36,6 +39,7 @@ import util.TechnicalAnalyst;
 
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 
@@ -68,19 +72,30 @@ public class Main {
         HashSet<String> headerSet = new HashSet<>();
         headerSet.addAll(Arrays.asList(headerArray));
 
+        for(int j = 0; j < Constants.powerSetNum[320].length; j++){
+            System.out.println(Constants.powerSetNum[320][j]);
+            System.out.println(Constants.powerSet[320][j]);
+        }
+
 
         try {
 
             int start = 0;
-            int length = Constants.powerSetNum.length;
+            int length = Constants.powerSet.length;
             String[] nextLine;
             for (int powerCount = start; powerCount < length; powerCount++) {
-                CSVReader reader = new CSVReader(new FileReader("all.csv"));
+                CSVReader reader = new CSVReader(new FileReader("alt-all.csv"));
                 CSVWriter trainWriter = new CSVWriter(new FileWriter("train.csv"));
                 CSVWriter testWriter = new CSVWriter(new FileWriter("test.csv"));
                 nextLine = reader.readNext();
-                trainWriter.writeNext(nextLine);
-                testWriter.writeNext(nextLine);
+
+                String title[] = new String[Constants.powerSetNum[powerCount].length + 1];
+                System.arraycopy(Constants.powerSet[powerCount], 0, title, 0, Constants.powerSetNum[powerCount].length);
+                title[Constants.powerSetNum[powerCount].length] = (headerArray[9]);
+
+                trainWriter.writeNext(title);
+                testWriter.writeNext(title);
+
 
                 int lineIndex = 0;
                 while ((nextLine = reader.readNext()) != null) {
@@ -442,6 +457,34 @@ public class Main {
         }
 
     }
+
+//    public static void  main(String[] args){
+//
+//        for(int j = 0; j < Constants.powerSetNum[320].length; j++){
+//            System.out.println(Constants.powerSetNum[320][j]);
+//            System.out.println(Constants.powerSet[320][j]);
+//        }
+//
+//
+//
+////        File jkseData = new File("jkse_data.txt");
+////
+////        for (int i = 0; i < 212; i++){
+////
+////            try {
+////                JsonReader reader = new JsonReader(new FileReader(new File("jkse_result_"+i+".json")));
+////                reader.beginArray();
+////                String content = reader.nextString();
+////                content = content.concat(i+"\n");
+////                reader.close();
+////                FileUtils.writeStringToFile(jkseData,content, Charset.defaultCharset(), true);
+////            } catch (FileNotFoundException e) {
+////                e.printStackTrace();
+////            } catch (IOException e) {
+////                e.printStackTrace();
+////            }
+////        }
+//    }
 
     private static void normalizeAll(String path, WizardMethodType methodType, NormalizeRange range) {
         File sourceFile = new File(path);

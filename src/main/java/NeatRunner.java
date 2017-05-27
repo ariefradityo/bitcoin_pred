@@ -43,7 +43,7 @@ public class NeatRunner extends Runner{
     public NeatRunner(int input, int output, MLDataSet trainingSet, MLDataSet testSet, double error, ActivationFunction function, boolean load){
         super(input, output, trainingSet, testSet, error);
 
-        this.population = new NEATPopulation(input,output,1000);
+        this.population = new NEATPopulation(input,output,100);
         population.setInitialConnectionDensity(1.0);// not required, but speeds training
         population.setNEATActivationFunction(function);
         population.reset();
@@ -57,7 +57,7 @@ public class NeatRunner extends Runner{
 
 
         //train.setSelection(new TruncationSelection(train, 0.3));
-        train.setSelection(new TournamentSelection(train, 100));
+        train.setSelection(new TournamentSelection(train, 10));
         final CompoundOperator weightMutation = new CompoundOperator();
 
         weightMutation.getComponents().add(
