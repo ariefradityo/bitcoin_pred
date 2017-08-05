@@ -21,6 +21,7 @@ import org.encog.neural.neat.training.opp.links.SelectFixed;
 import org.encog.neural.neat.training.opp.links.SelectProportion;
 import org.encog.neural.neat.training.species.OriginalNEATSpeciation;
 import org.encog.neural.networks.training.TrainingSetScore;
+import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.csv.CSVFormat;
 import org.encog.util.simple.TrainingSetUtil;
 
@@ -149,6 +150,7 @@ public class NeatRunner extends Runner{
         minReport.setMape(getReport().getMape());
     }
 
+
     private void loadPopulation(){
         File neatFile = new File(FILE_NAME);
         try {
@@ -165,7 +167,7 @@ public class NeatRunner extends Runner{
         savePopulation(FILE_NAME);
     }
 
-    private void savePopulation(String fileName){
+    public void savePopulation(String fileName){
         File neatFile = new File(fileName);
         try {
             FileOutputStream stream = new FileOutputStream(neatFile);

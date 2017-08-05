@@ -47,7 +47,7 @@ public class NewGabpnnRunner extends Runner {
 
         network = new BasicNetwork();
         network.addLayer(new BasicLayer(new ActivationTANH(), true, INPUT));
-        network.addLayer(new BasicLayer(new ActivationTANH(), true, 15));
+        network.addLayer(new BasicLayer(new ActivationTANH(), true, 7));
         network.addLayer(new BasicLayer(new ActivationTANH(), true, OUTPUT));
         network.getStructure().finalizeStructure();
         network.reset(10);
@@ -144,6 +144,11 @@ public class NewGabpnnRunner extends Runner {
 
     private void saveGabpnn(BasicNetwork network) {
         File neatFile = new File(FILE_NAME);
+        EncogDirectoryPersistence.saveObject(neatFile, network);
+    }
+
+    public void saveGabpnn(String fileName){
+        File neatFile = new File(fileName);
         EncogDirectoryPersistence.saveObject(neatFile, network);
     }
 

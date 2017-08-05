@@ -65,9 +65,9 @@ public class GannRunner extends Runner {
         super(input, output, trainingSet, testSet, error);
 
         network = new BasicNetwork();
-        network.addLayer(new BasicLayer(new  ActivationSigmoid(), true, INPUT));
-        network.addLayer(new BasicLayer(new  ActivationSigmoid(), true, hiddenNodes));
-        network.addLayer(new BasicLayer(new  ActivationSigmoid(), true, OUTPUT));
+        network.addLayer(new BasicLayer(new ActivationTANH(), true, INPUT));
+        network.addLayer(new BasicLayer(new ActivationTANH(), true, hiddenNodes));
+        network.addLayer(new BasicLayer(new ActivationTANH(), true, OUTPUT));
         network.getStructure().finalizeStructure();
         network.reset(10);
     }
@@ -80,12 +80,21 @@ public class GannRunner extends Runner {
         }
     }
 
+    public void loadFile(String fileName){
+        network = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File(fileName));
+    }
+
     private void saveGann(BasicNetwork network) {
         File neatFile = new File(FILE_NAME);
         EncogDirectoryPersistence.saveObject(neatFile, network);
     }
 
     private void saveGann(BasicNetwork network, String fileName) {
+        File neatFile = new File(fileName);
+        EncogDirectoryPersistence.saveObject(neatFile, network);
+    }
+
+    public void saveGann(String fileName){
         File neatFile = new File(fileName);
         EncogDirectoryPersistence.saveObject(neatFile, network);
     }

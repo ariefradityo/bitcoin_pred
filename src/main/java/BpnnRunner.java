@@ -33,7 +33,7 @@ public class BpnnRunner extends Runner{
         network.addLayer(new BasicLayer(new ActivationTANH(), false, INPUT));
         network.addLayer(new BasicLayer(new ActivationTANH(), false, OUTPUT));
         network.getStructure().finalizeStructure();
-        network.reset(10);
+        network.reset();
     }
 
     public BpnnRunner(int input, int output, MLDataSet trainingSet, MLDataSet testSet, double error, int hiddenNode) {
@@ -44,7 +44,7 @@ public class BpnnRunner extends Runner{
         network.addLayer(new BasicLayer(new ActivationTANH(), false, hiddenNode));
         network.addLayer(new BasicLayer(new ActivationTANH(), false, OUTPUT));
         network.getStructure().finalizeStructure();
-        network.reset(10);
+        network.reset();
     }
 
     private void saveBpnn(BasicNetwork network) {
@@ -55,6 +55,15 @@ public class BpnnRunner extends Runner{
     private void saveBpnn(BasicNetwork network, String fileName) {
         File neatFile = new File(fileName);
         EncogDirectoryPersistence.saveObject(neatFile, network);
+    }
+
+    public void saveBpnn(String fileName){
+        File neatFile = new File(fileName);
+        EncogDirectoryPersistence.saveObject(neatFile, network);
+    }
+
+    public void loadFile(String fileName){
+        network = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File(fileName));
     }
 
     public void runTrainFromGa(boolean load){
@@ -100,6 +109,6 @@ public class BpnnRunner extends Runner{
     public void runTest(EncogAnalyst analyst) {
         network = (BasicNetwork) EncogDirectoryPersistence.loadObject(new File(FILE_NAME));
         test(network, network, analyst);
-        //minReport.setMape(getReport().getMape());
+        minReport.setMape(getReport().getMape());
     }
 }
